@@ -69,6 +69,16 @@ impl<'a> Ipv4HeaderSlice<'a> {
             }));
         }
 
+        // HACK: TSO Packets
+        // If the total length is 0, we set it to the slice length
+        unsafe {
+            let total_len = get_unchecked_be_u16(slice.as_ptr().add(2));
+            if total_len == 0 && slice.len() > header_length {
+                let bytes = (slice.len() as u16).to_be_bytes();
+                std::ptr::copy(bytes.as_ptr(), slice.as_ptr().add(2) as _, 2);
+            }
+        }
+
         //all good
         Ok(Ipv4HeaderSlice {
             // SAFETY:

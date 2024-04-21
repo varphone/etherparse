@@ -75,7 +75,11 @@ impl<'a> Ipv4HeaderSlice<'a> {
             let total_len = get_unchecked_be_u16(slice.as_ptr().add(2));
             if total_len == 0 && slice.len() > header_length {
                 let bytes = (slice.len() as u16).to_be_bytes();
-                std::ptr::copy(bytes.as_ptr(), slice.as_ptr().add(2) as _, 2);
+                let slice_mut = slice.as_ptr() as *mut u8;
+                slice_mut.add(2).write_volatile(bytes[0]);
+                slice_mut.add(3).write_volatile(bytes[1]);
+                std::hint::black_box(slice_mut.add(2).read_volatile());
+                std::hint::black_box(slice_mut.add(3).read_volatile());
             }
         }
 
